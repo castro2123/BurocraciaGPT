@@ -29,7 +29,7 @@ pip install -r requirements.txt
 Por defeito, o `pip install -r requirements.txt` instala a versão **CPU-only** do PyTorch, o que torna o `ingest.py` (embeddings + OCR) mais lento. Se tiveres uma GPU NVIDIA, instala o PyTorch com suporte CUDA **antes** do resto das dependências:
 
 ```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt
 ```
 
