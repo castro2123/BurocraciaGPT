@@ -1,0 +1,59 @@
+# 🇵🇹 Burocracia GPT
+
+Assistente de IA para responder a dúvidas sobre burocracia portuguesa com base em documentos reais (IRS, IRC, Segurança Social, etc.).
+
+Usa RAG (Retrieval-Augmented Generation) com ChromaDB, embeddings HuggingFace e um modelo local via Ollama (Llama3). Suporta upload de PDFs e imagens com OCR automático.
+
+---
+
+## Instalação
+
+### 1. Pré-requisitos
+
+- Python 3.10+
+- [Ollama](https://ollama.com) instalado e a correr localmente com o modelo Llama3:
+
+```bash
+ollama pull llama3
+ollama serve
+```
+
+### 2. Instalar dependências Python
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Descarregar o modelo de embeddings
+
+```bash
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')"
+```
+
+---
+
+## Execução
+
+### 1. Indexar os documentos (só é necessário fazer uma vez)
+
+Coloca os PDFs na pasta `docs/` e executa:
+
+```bash
+python ingest.py
+```
+
+### 2. Lançar a aplicação web
+
+```bash
+streamlit run webapp.py
+```
+
+A aplicação abre automaticamente no browser em `http://localhost:8501`.
+
+---
+
+## O que faz
+
+- Responde a perguntas sobre burocracia portuguesa (IRS, IRC, IVA, Segurança Social, etc.) com base numa base de conhecimento de documentos PDF oficiais.
+- Permite fazer upload de um PDF ou imagem (carta, documento recebido) para análise — o sistema extrai o texto via OCR e usa-o como contexto adicional.
+- Apresenta o nível de confiança de cada resposta e permite ver os chunks de contexto utilizados.

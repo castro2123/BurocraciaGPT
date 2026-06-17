@@ -1,0 +1,22 @@
+body {
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+.block-container {
+    padding-top: 2rem;
+}
+
+.chat-user {
+    background: #c6cfdf;
+    padding: 12px;
+    border-radius: 12px;
+    margin: 5px 0;
+}
+
+.chat-bot {
+    background: #e7eef1;
+    padding: 12px;
+    border-radius: 12px;
+    margin: 5px 0;
+}
