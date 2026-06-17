@@ -7,7 +7,7 @@ from config import *
 
 embeddings = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL,
-    model_kwargs={"local_files_only": True}
+    model_kwargs={"local_files_only": True, "device": "cuda"}
 )
 
 db = Chroma(
