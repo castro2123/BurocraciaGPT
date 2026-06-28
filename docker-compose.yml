@@ -1,0 +1,55 @@
+services:
+
+  # ==============================================
+  # Serviço Ollama — LLM local (Llama3)
+  # ==============================================
+  ollama:
+    image: ollama/ollama
+    container_name: burocracia-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ==============================================
+  # Serviço de setup — puxa o modelo Llama3
+  # (corre uma vez e termina)
+  # ==============================================
+  ollama-setup:
+    image: ollama/ollama
+    container_name: burocracia-ollama-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["ollama", "pull", "llama3"]
+    restart: "no"
+
+  # ==============================================
+  # Serviço principal — Burocracia GPT (Streamlit)
+  # ==============================================
+  app:
+    build: .
+    container_name: burocracia-gpt-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - chroma_db:/app/db
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_URL=http://ollama:11434/api/generate
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  chroma_db:
