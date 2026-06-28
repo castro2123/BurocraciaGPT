@@ -4,68 +4,75 @@ Assistente de IA para responder a dúvidas sobre burocracia portuguesa com base 
 
 Usa RAG (Retrieval-Augmented Generation) com ChromaDB, embeddings HuggingFace e um modelo local via Ollama (Llama3). Suporta upload de PDFs e imagens com OCR automático.
 
----
-
-## Instalação
-
-### 1. Pré-requisitos
-
-- Python 3.10+
-- [Ollama](https://ollama.com) instalado e a correr localmente com o modelo Llama3:
-
-```bash
-ollama pull llama3
-ollama serve
-```
-
-### 2. Instalar dependências Python
-
-```bash
-pip install -r requirements.txt
-```
-
-#### (Opcional) Acelerar com GPU (CUDA)
-
-Por defeito, o `pip install -r requirements.txt` instala a versão **CPU-only** do PyTorch, o que torna o `ingest.py` (embeddings + OCR) mais lento. Se tiveres uma GPU NVIDIA, instala o PyTorch com suporte CUDA **antes** do resto das dependências:
-
-```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-pip install -r requirements.txt
-```
-
-Confirma que ficou tudo bem com:
-
-```bash
-python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
-```
-
-Se `torch.cuda.is_available()` devolver `True`, o `ingest.py` e o OCR (`ocr.py`) vão usar automaticamente a GPU.
-
-### 3. Descarregar o modelo de embeddings
-
-```bash
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')"
-```
+> **Este projeto corre inteiramente em Docker** — não é necessário instalar Python, Ollama, nem qualquer dependência no computador.
 
 ---
 
-## Execução
+## Pré-requisitos
 
-### 1. Indexar os documentos (só é necessário fazer uma vez)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e em execução
 
-Coloca os PDFs na pasta `docs/` e executa:
+---
+
+## Instalação e execução
+
+### 1. Adicionar os documentos (opcional)
+
+Colocar mais PDFs de legislação portuguesa na pasta `docs/` se pretender, antes de arrancar o projeto.
+
+### 2. Arrancar no Docker Desktop
+
+Abre um terminal na pasta do projeto e corre:
 
 ```bash
-python ingest.py
+docker compose up --build
 ```
 
-### 2. Lançar a aplicação web
+O Docker trata automaticamente de tudo:
 
-```bash
-streamlit run webapp.py
+| Passo | O que acontece |
+|---|---|
+| Build da imagem | Instala todas as dependências do `requirements.txt` |
+| Embeddings | Descarrega o modelo HuggingFace multilingue |
+| Ollama | Arranca o servidor do modelo de linguagem |
+| Llama 3 | Descarrega o modelo (~4 GB, só na primeira vez) |
+| Ingest | Lê os PDFs da pasta `docs/`, cria chunks e popula o ChromaDB |
+| App | Lança a aplicação Streamlit na porta 8501 |
+
+### 3. Abrir a aplicação
+
+No Docker Desktop, quando os três containers estiverem a **verde (running)**:
+
+- Clica no link **`8501:8501`** no container `app`
+- Ou acede diretamente a: **http://localhost:8501**
+
+---
+
+## Estrutura dos containers
+
+| Container | Imagem | Função |
+|---|---|---|
+| `app` | Build local | Aplicação Streamlit + ChromaDB |
+| `ollama` | `ollama/ollama` | Servidor do modelo Llama 3 |
+| `ollama-setup` | `ollama/ollama` | Descarrega o Llama 3 (corre uma vez) |
+
+---
+
+## Estrutura do projeto
+
 ```
-
-A aplicação abre automaticamente no browser em `http://localhost:8501`.
+├── Dockerfile             # Imagem da aplicação Streamlit
+├── docker-compose.yml     # Orquestra os 3 serviços
+├── webapp.py              # Interface Streamlit (chat, upload, arquitetura)
+├── ingest.py              # Lê PDFs, cria embeddings e popula o ChromaDB
+├── rag.py                 # Pesquisa semântica na base vetorial
+├── llm.py                 # Chama o Ollama (Llama 3) com prompt e contexto
+├── ocr.py                 # Extrai texto de imagens com EasyOCR
+├── memory.py              # Gestão do histórico de conversação
+├── config.py              # Configurações gerais
+├── docs/                  # PDFs de legislação portuguesa (adicionares tu)
+└── db/                    # Base ChromaDB (gerada automaticamente)
+```
 
 ---
 
@@ -74,3 +81,17 @@ A aplicação abre automaticamente no browser em `http://localhost:8501`.
 - Responde a perguntas sobre burocracia portuguesa (IRS, IRC, IVA, Segurança Social, etc.) com base numa base de conhecimento de documentos PDF oficiais.
 - Permite fazer upload de um PDF ou imagem (carta, documento recebido) para análise — o sistema extrai o texto via OCR e usa-o como contexto adicional.
 - Apresenta o nível de confiança de cada resposta e permite ver os chunks de contexto utilizados.
+
+---
+
+## Parar e reiniciar
+
+```bash
+# Parar
+docker compose down
+
+# Reiniciar (sem rebuild — muito mais rápido)
+docker compose up
+```
+
+> Na segunda execução, o modelo Llama 3 e os dados do ChromaDB já estão guardados em volumes Docker, por isso o arranque é quase imediato.
