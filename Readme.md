@@ -24,6 +24,23 @@ ollama serve
 pip install -r requirements.txt
 ```
 
+#### (Opcional) Acelerar com GPU (CUDA)
+
+Por defeito, o `pip install -r requirements.txt` instala a versão **CPU-only** do PyTorch, o que torna o `ingest.py` (embeddings + OCR) mais lento. Se tiveres uma GPU NVIDIA, instala o PyTorch com suporte CUDA **antes** do resto das dependências:
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+pip install -r requirements.txt
+```
+
+Confirma que ficou tudo bem com:
+
+```bash
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+```
+
+Se `torch.cuda.is_available()` devolver `True`, o `ingest.py` e o OCR (`ocr.py`) vão usar automaticamente a GPU.
+
 ### 3. Descarregar o modelo de embeddings
 
 ```bash
